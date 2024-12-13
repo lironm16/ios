@@ -13,12 +13,10 @@ jobs:
       - name: Checkout Repository
         uses: actions/checkout@v4
 
-      - name: Push Subtree to Shared SDK
-        uses: nxtlvlsoftware/git-subtree-action@master
+      - name: Sync Subtree to Shared SDK
+        uses: xedi/action-subtree-sync@1.0.0
         with:
-          # command: push
-          repo: git@github.com:lironm16/shared-sdk.git # Target repository
-          path: IronSource/SharedLevelPlay/shared-sdk # Subtree directory
-          deploy_key: ${{ secrets.SHARED_SDK_DEPLOY_KEY }} # SSH deploy key
-          branch: ${{ github.ref_name }} # Target branch
-          tag: true # Automatically create a tag
+          subtree: 'lironm16/shared-sdk' # Target repository
+          subtree_deploy_key: ${{ secrets.SHARED_SDK_DEPLOY_KEY }} # Deploy key stored as a secret
+          split_prefix: 'IronSource/SharedLevelPlay/shared-sdk' # Subtree directory
+          tag: true # Enable tagging

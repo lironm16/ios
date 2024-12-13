@@ -11,23 +11,19 @@ jobs:
     - name: Checkout iOS Repository
       uses: actions/checkout@v3
 
-    - name: Fetch shared-sdk Branch
+    - name: Fetch shared-sdk Target Branch
       run: |
-        # Extract branch name from the PR's source branch
-        SOURCE_BRANCH=${{ github.event.pull_request.head.ref }}
+        # Use the target branch (base.ref) from the pull request
         TARGET_BRANCH=${{ github.event.pull_request.base.ref }}
 
-        echo "PR Source Branch: $SOURCE_BRANCH"
-        echo "PR Target Branch: $TARGET_BRANCH"
+        echo "Checking target branch: $TARGET_BRANCH"
 
-        # Attempt to fetch the corresponding branch from shared-sdk
-        git fetch https://github.com/lironm16/shared-sdk.git $TARGET_BRANCH || true
-        git fetch https://github.com/lironm16/shared-sdk.git $SOURCE_BRANCH || true
+        # Fetch the target branch from the shared-sdk repository
+        git fetch https://github.com/lironm16/shared-sdk.git $TARGET_BRANCH
 
-    - name: Compare Subtree with shared-sdk
+    - name: Compare Subtree with shared-sdk Target Branch
       run: |
-        # Use `diff` to compare the subtree with the fetched branch
-        SOURCE_BRANCH=${{ github.event.pull_request.head.ref }}
-        git diff --exit-code IronSource/SharedLevelPlay FETCH_HEAD || (
-          echo "The subtree is not up-to-date with the shared-sdk $SOURCE_BRANCH branch." && exit 1
+        # Compare the contents of the shared-sdk subtree with the fetched target branch
+        git diff --exit-code IronSource/SharedLevelPlay/shared-sdk FETCH_HEAD || (
+          echo "The subtree (IronSource/SharedLevelPlay/shared-sdk) is not up-to-date with the shared-sdk $TARGET_BRANCH branch." && exit 1
         )

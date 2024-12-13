@@ -14,9 +14,10 @@ jobs:
         uses: actions/checkout@v4
 
       - name: Sync Subtree to Shared SDK
-        uses: xedi/action-subtree-sync@1.0.0
+        uses: karlludwigweise/git-subtree@v1
         with:
+          action: add
+          position: ${{ github.ref_name }} # Branch to push to
           subtree: 'lironm16/shared-sdk' # Target repository
-          subtree_deploy_key: ${{ secrets.SHARED_SDK_DEPLOY_KEY }} # Deploy key stored as a secret
-          split_prefix: 'IronSource/SharedLevelPlay/shared-sdk' # Subtree directory
-          tag: true # Enable tagging
+          pat: ${{ secrets.SHARED_SDK_PAT }} # Deploy key stored as a secret
+          prefix: 'IronSource/SharedLevelPlay/shared-sdk' # Subtree directory

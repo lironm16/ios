@@ -17,6 +17,6 @@ jobs:
         uses: xedi/action-subtree-sync@1.0.0
         with:
           subtree: 'lironm16/shared-sdk' # Target repository
-          subtree_deploy_key: ${{ secrets.DEPLOY_KEY }} # Deploy key stored as a secret
+          subtree_deploy_key: ${{ secrets.SHARED_SDK_DEPLOY_KEY }} # Deploy key stored as a secret
           split_prefix: 'IronSource/SharedLevelPlay/shared-sdk' # Subtree directory
           tag: true # Enable tagging

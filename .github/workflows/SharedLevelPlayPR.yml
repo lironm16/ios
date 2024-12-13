@@ -2,10 +2,6 @@ name: SharedLevelPlay PR Check
 
 on:
   pull_request:
-    branches:
-      - develop
-      - main
-      - feature/*
 
 jobs:
   check-subtree:

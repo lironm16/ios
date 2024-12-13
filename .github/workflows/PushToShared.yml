@@ -17,8 +17,8 @@ jobs:
         uses: nxtlvlsoftware/git-subtree-action@master
         with:
           command: push
-          prefix: IronSource/SharedLevelPlay/shared-sdk # Subtree path
-          repository: git@github.com:lironm16/shared-sdk.git # Target repository
-          branch: ${{ github.ref_name }} # Branch to push
-          deploy_key: ${{ secrets.SHARED_SDK_DEPLOY_KEY }} # Deploy key for SSH auth
-          tag: true # Automatically tag the push
+          repo: git@github.com:lironm16/shared-sdk.git # Target repository
+          path: IronSource/SharedLevelPlay/shared-sdk # Subtree directory
+          deploy_key: ${{ secrets.SHARED_SDK_DEPLOY_KEY }} # SSH deploy key
+          branch: ${{ github.ref_name }} # Target branch
+          tag: true # Automatically create a tag

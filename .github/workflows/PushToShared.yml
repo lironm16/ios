@@ -1,0 +1,24 @@
+name: Push Subtree to Shared SDK
+
+on:
+  push:
+    branches:
+      - '**'
+
+jobs:
+  push-subtree:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Push Subtree to Shared SDK
+        uses: nxtlvlsoftware/git-subtree-action@v1.1.0
+        with:
+          command: push
+          prefix: IronSource/SharedLevelPlay/shared-sdk
+          repository: git@github.com:lironm16/shared-sdk.git
+          branch: ${{ github.ref_name }}
+          deploy_key: ${{ secrets.DEPLOY_KEY }}
+          tag: true

@@ -1,22 +1,45 @@
-name: Push Subtree to Shared SDK
+name: Sync Subtree with Tagging
 
 on:
   push:
     branches:
-      - '**' # Trigger on all branch pushes
+      - '**' # Trigger on any branch push
 
 jobs:
-  push-subtree:
+  sync-subtree:
     runs-on: ubuntu-latest
 
     steps:
+      # Step 1: Check out the repository
       - name: Checkout Repository
         uses: actions/checkout@v4
 
-      - name: Sync Subtree to Shared SDK
-        uses: elanworld/subtree-sync-action@v1.0
-        with:
-          branch: ${{ github.ref_name }} # Branch to push to
-          repo: lironm16/shared-sdk # Target repository
-          repo_token: ${{ secrets.SHARED_SDK_PAT }} # Deploy key stored as a secret
-          path: 'IronSource/SharedLevelPlay/shared-sdk' # Subtree directory
+      # Step 2: Configure Git
+      - name: Configure Git
+        run: |
+          git config user.name "GitHub Actions Bot"
+          git config user.email "actions@github.com"
+
+      # Step 3: Push Subtree to Shared SDK
+      - name: Push Subtree to Shared SDK
+        env:
+          PAT: ${{ secrets.PAT }}
+        run: |
+          SUBTREE_PATH="IronSource/SharedLevelPlay/shared-sdk" # Path to the subtree directory
+          TARGET_REPO="git@github.com:lironm16/shared-sdk.git" # Target repository
+          TARGET_BRANCH="${{ github.ref_name }}" # Target branch matches source branch
+
+          # Ensure the branch exists
+          git checkout ${{ github.ref_name }} || git checkout -b ${{ github.ref_name }}
+
+          # Push subtree to the target repository
+          git subtree push --prefix=$SUBTREE_PATH https://${PAT}@github.com/lironm16/shared-sdk.git $TARGET_BRANCH
+
+      # Step 4: Create and Push Tag
+      - name: Create and Push Tag
+        env:
+          PAT: ${{ secrets.PAT }}
+          TAG_NAME: "sync-${{ github.ref_name }}-$(date +'%Y%m%d-%H%M%S')" # Dynamic tag name
+        run: |
+          git tag -a $TAG_NAME -m "Sync subtree from ${{ github.ref_name }}"
+          git push https://${PAT}@github.com/${{ github.repository }} $TAG_NAME

@@ -16,8 +16,7 @@ jobs:
       - name: Sync Subtree to Shared SDK
         uses: elanworld/subtree-sync-action@v1.0
         with:
-          action: add
           branch: ${{ github.ref_name }} # Branch to push to
-          repo: https://github.com/lironm16/shared-sdk # Target repository
+          repo: lironm16/shared-sdk # Target repository
           repo_token: ${{ secrets.SHARED_SDK_PAT }} # Deploy key stored as a secret
           path: 'IronSource/SharedLevelPlay/shared-sdk' # Subtree directory

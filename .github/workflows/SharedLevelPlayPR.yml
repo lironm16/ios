@@ -23,7 +23,10 @@ jobs:
 
     - name: Compare Subtree with shared-sdk Target Branch
       run: |
-        # Compare the contents of the shared-sdk subtree with the fetched target branch
-        git diff --exit-code IronSource/SharedLevelPlay/shared-sdk FETCH_HEAD || (
+        # Check out the fetched target branch into the working directory
+        git checkout FETCH_HEAD -- .
+
+        # Compare the subtree directory with the fetched shared-sdk content
+        diff -r IronSource/SharedLevelPlay/shared-sdk . || (
           echo "The subtree (IronSource/SharedLevelPlay/shared-sdk) is not up-to-date with the shared-sdk $TARGET_BRANCH branch." && exit 1
         )

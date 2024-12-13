@@ -1,24 +1,22 @@
-name: Push Subtree to Shared SDK
+name: Sync Subtree to Shared SDK
 
 on:
   push:
     branches:
-      - '**'
+      - '**' # Trigger on all branches
 
 jobs:
-  push-subtree:
+  sync-subtree:
     runs-on: ubuntu-latest
 
     steps:
       - name: Checkout Repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v3
 
-      - name: Push Subtree to Shared SDK
-        uses: nxtlvlsoftware/git-subtree-action@master
+      - name: Sync Subtree to Shared SDK
+        uses: xedi/action-subtree-sync@1.0.0
         with:
-          command: push
-          prefix: IronSource/SharedLevelPlay/shared-sdk
-          repository: git@github.com:lironm16/shared-sdk.git
-          branch: ${{ github.ref_name }}
-          deploy_key: ${{ secrets.SHARED_SDK_DEPLOY_KEY }}
-          tag: true
+          subtree: 'lironm16/shared-sdk' # Target repository
+          subtree_deploy_key: ${{ secrets.SHARED_SDK_DEPLOY_KEY }} # Deploy key stored as a secret
+          split_prefix: 'IronSource/SharedLevelPlay/shared-sdk' # Subtree directory
+          tag: true # Enable tagging

@@ -14,10 +14,10 @@ jobs:
         uses: actions/checkout@v4
 
       - name: Sync Subtree to Shared SDK
-        uses: karlludwigweise/git-subtree@v1
+        uses: elanworld/subtree-sync-action@v1.0
         with:
           action: add
-          position: ${{ github.ref_name }} # Branch to push to
+          branch: ${{ github.ref_name }} # Branch to push to
           repo: https://github.com/lironm16/shared-sdk # Target repository
-          pat: ${{ secrets.SHARED_SDK_PAT }} # Deploy key stored as a secret
-          prefix: 'IronSource/SharedLevelPlay/shared-sdk' # Subtree directory
+          repo_token: ${{ secrets.SHARED_SDK_PAT }} # Deploy key stored as a secret
+          path: 'IronSource/SharedLevelPlay/shared-sdk' # Subtree directory

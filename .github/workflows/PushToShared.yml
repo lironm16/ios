@@ -18,6 +18,6 @@ jobs:
         with:
           action: add
           position: ${{ github.ref_name }} # Branch to push to
-          subtree: 'lironm16/shared-sdk' # Target repository
+          repo: https://github.com/lironm16/ios # Target repository
           pat: ${{ secrets.SHARED_SDK_PAT }} # Deploy key stored as a secret
           prefix: 'IronSource/SharedLevelPlay/shared-sdk' # Subtree directory

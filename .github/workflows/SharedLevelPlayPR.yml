@@ -1,0 +1,37 @@
+name: SharedLevelPlay PR Check
+
+on:
+  pull_request:
+    branches:
+      - develop
+      - main
+      - feature/*
+
+jobs:
+  check-subtree:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout iOS Repository
+      uses: actions/checkout@v3
+
+    - name: Fetch shared-sdk Branch
+      run: |
+        # Extract branch name from the PR's source branch
+        SOURCE_BRANCH=${{ github.event.pull_request.head.ref }}
+        TARGET_BRANCH=${{ github.event.pull_request.base.ref }}
+
+        echo "PR Source Branch: $SOURCE_BRANCH"
+        echo "PR Target Branch: $TARGET_BRANCH"
+
+        # Attempt to fetch the corresponding branch from shared-sdk
+        git fetch https://github.com/lironm16/shared-sdk.git $TARGET_BRANCH || true
+        git fetch https://github.com/lironm16/shared-sdk.git $SOURCE_BRANCH || true
+
+    - name: Compare Subtree with shared-sdk
+      run: |
+        # Use `diff` to compare the subtree with the fetched branch
+        SOURCE_BRANCH=${{ github.event.pull_request.head.ref }}
+        git diff --exit-code IronSource/SharedLevelPlay FETCH_HEAD || (
+          echo "The subtree is not up-to-date with the shared-sdk $SOURCE_BRANCH branch." && exit 1
+        )

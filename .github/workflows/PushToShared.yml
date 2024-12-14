@@ -39,11 +39,8 @@ jobs:
           # Ensure the branch exists
           git checkout ${{ github.ref_name }} || git checkout -b ${{ github.ref_name }}
 
-          # Option 1: Pull remote changes (safe merge)
-          git pull $TARGET_REPO $TARGET_BRANCH --rebase || true
-
           # Option 2: Force push subtree (overwrite remote)
-          git subtree push --prefix=$SUBTREE_PATH $TARGET_REPO $TARGET_BRANCH -f
+          git subtree push --prefix=$SUBTREE_PATH $TARGET_REPO $TARGET_BRANCH
 
       # Step 5: Create and Push Tag
       - name: Create and Push Tag

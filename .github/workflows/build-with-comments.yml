@@ -82,19 +82,6 @@ jobs:
                 body: process.env.COMMENT_BODY,
               });
             }
-            
-      - name: Update Existing Comment
-        if: steps.build.outputs.build_result == 'failure' && steps.check-comments.outputs.comment_id != ''
-        uses: actions/github-script@v6
-        with:
-          github-token: ${{ secrets.GITHUB_TOKEN }}
-          script: |
-            await github.rest.issues.updateComment({
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              comment_id: steps['check-comments'].outputs.comment_id,
-              body: steps['check-comments'].outputs.comment_body,
-            });
 
       # Step 4: Remove Comment if Build Passes
       - name: Remove Comment if Build Passes

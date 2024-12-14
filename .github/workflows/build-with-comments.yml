@@ -42,8 +42,9 @@ jobs:
               issue_number: context.payload.pull_request.number,
             });
 
+            // Check for an existing comment with the same content
             const duplicateComment = existingComments.data.find(comment =>
-              comment.body === commentBody
+              comment.body.startsWith("🚨 The build has failed!")
             );
 
             if (duplicateComment) {
@@ -54,23 +55,34 @@ jobs:
             core.setOutput("comment_body", commentBody);
 
       # Step 3: Post or update comment if the build fails
-      - name: Post New Comment
-        if: steps.build.outputs.build_result == 'failure' && steps.check-comments.outputs.comment_id == ''
+      - name: Post or Update Failure Comment
+        if: steps.build.outputs.build_result == 'failure'
         uses: actions/github-script@v6
         env:
           COMMENT_BODY: ${{ steps.check-comments.outputs.comment_body }}
+          COMMENT_ID: ${{ steps.check-comments.outputs.comment_id }}
           PR_NUMBER: ${{ github.event.pull_request.number }}
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
           script: |
-            await github.rest.issues.createComment({
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              issue_number: process.env.PR_NUMBER,
-              body: process.env.COMMENT_BODY,
-            });
-
-
+            if (process.env.COMMENT_ID) {
+              // Update existing comment
+              await github.rest.issues.updateComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                comment_id: process.env.COMMENT_ID,
+                body: process.env.COMMENT_BODY,
+              });
+            } else {
+              // Create new comment
+              await github.rest.issues.createComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: process.env.PR_NUMBER,
+                body: process.env.COMMENT_BODY,
+              });
+            }
+            
       - name: Update Existing Comment
         if: steps.build.outputs.build_result == 'failure' && steps.check-comments.outputs.comment_id != ''
         uses: actions/github-script@v6

@@ -1,14 +1,19 @@
-name: Build and Comment Workflow
+name: Build and Comment on PR
 
 on:
   pull_request:
+    types: [opened, synchronize, reopened]
+
+permissions:
+  pull-requests: write  # Allows the workflow to post comments on PRs
+  contents: read        # Grants read-only access to the repository contents
 
 jobs:
-  mock-build:
+  build:
     runs-on: ubuntu-latest
 
     steps:
-      # Step 1: Mock a build result
+      # Step 1: Mock a build result (replace with your actual build steps)
       - name: Mock Build Result
         id: build
         run: |
@@ -19,27 +24,23 @@ jobs:
             echo "build_result=failure" >> $GITHUB_OUTPUT
           fi
 
-      # Step 2: Check for previous comments
-      - name: Check Previous Comments
-        id: comment_check
+      # Step 2: Check for existing comments on the PR
+      - name: Check for Existing Comments
+        id: check-comments
         uses: actions/github-script@v6
         with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
           script: |
             const { context } = require("@actions/github");
-            const commentBody = `
-🚨 This PR contains **breaking changes** for Android!
-
-Target branch: \`${context.payload.pull_request.base.ref}\`
-
-You can view the workflow details [here](https://github.com/${context.repo.owner}/${context.repo.repo}/actions/runs/${context.runId}).
+            const commentBody = `🚨 The build has failed! Please check the logs. Target branch: \`${context.payload.pull_request.base.ref}\` You can view the workflow details [here](https://github.com/${context.repo.owner}/${context.repo.repo}/actions/runs/${context.runId}).
             `.trim();
 
             const existingComments = await github.rest.issues.listComments({
-              ...context.repo,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
               issue_number: context.payload.pull_request.number,
             });
 
-            // Check for duplicate comments
             const duplicateComment = existingComments.data.find(comment =>
               comment.body === commentBody
             );
@@ -50,51 +51,46 @@ You can view the workflow details [here](https://github.com/${context.repo.owner
               core.setOutput("comment_id", "");
             }
             core.setOutput("comment_body", commentBody);
-          env:
-            GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-      # Step 3: Post or update comment if build fails
-      - name: Post or Update Comment
-        if: steps.build.outputs.build_result == 'failure' && steps.comment_check.outputs.comment_id == ''
+      # Step 3: Post or update comment if the build fails
+      - name: Post New Comment
+        if: steps.build.outputs.build_result == 'failure' && steps.check-comments.outputs.comment_id == ''
         uses: actions/github-script@v6
         with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
           script: |
             const { context } = require("@actions/github");
             await github.rest.issues.createComment({
-              ...context.repo,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
               issue_number: context.payload.pull_request.number,
-              body: steps.comment_check.outputs.comment_body,
+              body: steps.check-comments.outputs.comment_body,
             });
-          env:
-            GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Update Existing Comment
-        if: steps.build.outputs.build_result == 'failure' && steps.comment_check.outputs.comment_id != ''
+        if: steps.build.outputs.build_result == 'failure' && steps.check-comments.outputs.comment_id != ''
         uses: actions/github-script@v6
         with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
           script: |
             const { context } = require("@actions/github");
             await github.rest.issues.updateComment({
-              ...context.repo,
-              comment_id: steps.comment_check.outputs.comment_id,
-              body: steps.comment_check.outputs.comment_body,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              comment_id: steps.check-comments.outputs.comment_id,
+              body: steps.check-comments.outputs.comment_body,
             });
-          env:
-            GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-      # Step 4: Remove comment and badge if build passes
-      - name: Remove Comment and Badge if Build Passes
-        if: steps.build.outputs.build_result == 'success' && steps.comment_check.outputs.comment_id != ''
+      # Step 4: Remove comment if the build passes
+      - name: Remove Comment if Build Passes
+        if: steps.build.outputs.build_result == 'success' && steps.check-comments.outputs.comment_id != ''
         uses: actions/github-script@v6
         with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
           script: |
             const { context } = require("@actions/github");
-            // Delete the existing comment
             await github.rest.issues.deleteComment({
-              ...context.repo,
-              comment_id: steps.comment_check.outputs.comment_id,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              comment_id: steps.check-comments.outputs.comment_id,
             });
-
-            // Additional logic to update/remove badge can go here
-          env:
-            GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

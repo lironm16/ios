@@ -9,34 +9,43 @@ jobs:
   sync-subtree:
     runs-on: ubuntu-latest
 
+    env:
+      SSH_AUTH_SOCK: /tmp/ssh_agent.sock
     steps:
       # Step 1: Check out the repository
       - name: Checkout Repository
         uses: actions/checkout@v4
 
-      # Step 2: Setup SSH
       - name: Setup SSH
         run: |
           mkdir -p ~/.ssh
           ssh-keyscan github.com >> ~/.ssh/known_hosts
-          eval "$(ssh-agent -s)" # Start ssh-agent
-          echo "${{ secrets.SHARED_SDK_DEPLOY_KEY }}" | tr -d '\r' | ssh-add - # Add private key
-          ssh-add -l # Verify the key is added
+          ssh-agent -a $SSH_AUTH_SOCK > /dev/null
+          ssh-add - <<< "${{ secrets.SHARED_SDK_DEPLOY_KEY }}"
+          
+      # # Step 2: Setup SSH
+      # - name: Setup SSH
+      #   run: |
+      #     mkdir -p ~/.ssh
+      #     ssh-keyscan github.com >> ~/.ssh/known_hosts
+      #     eval "$(ssh-agent -s)" # Start ssh-agent
+      #     echo "${{ secrets.SHARED_SDK_DEPLOY_KEY }}" | tr -d '\r' | ssh-add - # Add private key
+      #     ssh-add -l # Verify the key is added
 
 
-      # Debug SSH Connection
-      - name: Test SSH Connection
-        run: |
-          ssh -T git@github.com
+      # # Debug SSH Connection
+      # - name: Test SSH Connection
+      #   run: |
+      #     ssh -T git@github.com
 
-      # Debug SSH Key
-      - name: Debug SSH Setup
-        run: |
-          echo "Checking SSH Agent:"
-          eval "$(ssh-agent -s)"
-          ssh-add -l
-          echo "Testing SSH Connection to GitHub:"
-          ssh -T git@github.com || true
+      # # Debug SSH Key
+      # - name: Debug SSH Setup
+      #   run: |
+      #     echo "Checking SSH Agent:"
+      #     eval "$(ssh-agent -s)"
+      #     ssh-add -l
+      #     echo "Testing SSH Connection to GitHub:"
+      #     ssh -T git@github.com || true
 
           
       # Step 3: Configure Git

@@ -3,7 +3,7 @@ name: Sync Subtree with Tagging
 on:
   push:
     branches:
-      - '**' # Trigger on any branch push
+      - '**'
 
 jobs:
   sync-subtree:
@@ -14,16 +14,22 @@ jobs:
       - name: Checkout Repository
         uses: actions/checkout@v4
 
-      # Step 2: Configure Git
+      # Step 2: Setup SSH
+      - name: Setup SSH
+        run: |
+          mkdir -p ~/.ssh
+          ssh-keyscan github.com >> ~/.ssh/known_hosts
+          ssh-agent -a $SSH_AUTH_SOCK > /dev/null
+          ssh-add - <<< "${{ secrets.SHARED_SDK_DEPLOY_KEY }}"
+
+      # Step 3: Configure Git
       - name: Configure Git
         run: |
           git config user.name "GitHub Actions Bot"
           git config user.email "actions@github.com"
 
-      # Step 3: Push Subtree to Shared SDK
+      # Step 4: Push Subtree to Shared SDK
       - name: Push Subtree to Shared SDK
-        env:
-          PAT: ${{ secrets.SHARED_SDK_PAT }}
         run: |
           SUBTREE_PATH="IronSource/SharedLevelPlay/shared-sdk" # Path to the subtree directory
           TARGET_REPO="git@github.com:lironm16/shared-sdk.git" # Target repository
@@ -32,14 +38,13 @@ jobs:
           # Ensure the branch exists
           git checkout ${{ github.ref_name }} || git checkout -b ${{ github.ref_name }}
 
-          # Push subtree to the target repository
-          git subtree push --prefix=$SUBTREE_PATH https://${PAT}@github.com/lironm16/shared-sdk.git $TARGET_BRANCH
+          # Push subtree to the target repository using SSH
+          git subtree push --prefix=$SUBTREE_PATH $TARGET_REPO $TARGET_BRANCH
 
-      # Step 4: Create and Push Tag
+      # Step 5: Create and Push Tag
       - name: Create and Push Tag
         env:
-          PAT: ${{ secrets.SHARED_SDK_PAT }}
           TAG_NAME: "sync-${{ github.ref_name }}-$(date +'%Y%m%d-%H%M%S')" # Dynamic tag name
         run: |
           git tag -a $TAG_NAME -m "Sync subtree from ${{ github.ref_name }}"
-          git push https://${PAT}@github.com/${{ github.repository }} $TAG_NAME
+          git push origin $TAG_NAME

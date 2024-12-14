@@ -1,4 +1,4 @@
-name: Sync Subtree with Tagging
+name: Sync Subtree with Pull Strategy
 
 on:
   push:
@@ -8,8 +8,10 @@ on:
 jobs:
   sync-subtree:
     runs-on: ubuntu-latest
+
     env:
-      SSH_AUTH_SOCK: /tmp/ssh_agent.sock
+      SSH_AUTH_SOCK: /tmp/ssh_agent.sock # Required for SSH authentication
+
     steps:
       # Step 1: Check out the repository
       - name: Checkout Repository
@@ -39,8 +41,8 @@ jobs:
           # Ensure the branch exists locally
           git checkout ${{ github.ref_name }} || git checkout -b ${{ github.ref_name }}
 
-          # Pull the latest changes from the remote branch and merge
-          git pull $TARGET_REPO $TARGET_BRANCH || true
+          # Specify a pull strategy (merge)
+          git pull --no-rebase $TARGET_REPO $TARGET_BRANCH || true
 
       # Step 5: Push Subtree to Shared SDK
       - name: Push Subtree to Shared SDK
@@ -49,23 +51,10 @@ jobs:
           TARGET_REPO="git@github.com:lironm16/shared-sdk.git"
           TARGET_BRANCH="${{ github.ref_name }}"
 
-          # Push the subtree after merging remote changes
+          # Push the subtree
           git subtree push --prefix=$SUBTREE_PATH $TARGET_REPO $TARGET_BRANCH
 
-      # # Step 4: Push Subtree to Shared SDK
-      # - name: Push Subtree to Shared SDK
-      #   run: |
-      #     SUBTREE_PATH="IronSource/SharedLevelPlay/shared-sdk"
-      #     TARGET_REPO="git@github.com:lironm16/shared-sdk.git"
-      #     TARGET_BRANCH="${{ github.ref_name }}"
-
-      #     # Ensure the branch exists
-      #     git checkout ${{ github.ref_name }} || git checkout -b ${{ github.ref_name }}
-
-      #     # Option 2: Force push subtree (overwrite remote)
-      #     git subtree push --prefix=$SUBTREE_PATH $TARGET_REPO $TARGET_BRANCH
-
-      # Step 5: Create and Push Tag
+      # Step 6: Create and Push Tag
       - name: Create and Push Tag
         env:
           TAG_NAME: "sync-${{ github.ref_name }}-$(date +'%Y%m%d-%H%M%S')" # Dynamic tag name

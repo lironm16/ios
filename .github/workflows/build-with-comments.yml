@@ -96,15 +96,17 @@ jobs:
               body: steps['check-comments'].outputs.comment_body,
             });
 
-      # Step 4: Remove comment if the build passes
+      # Step 4: Remove Comment if Build Passes
       - name: Remove Comment if Build Passes
         if: steps.build.outputs.build_result == 'success' && steps.check-comments.outputs.comment_id != ''
         uses: actions/github-script@v6
+        env:
+          COMMENT_ID: ${{ steps.check-comments.outputs.comment_id }}
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
           script: |
             await github.rest.issues.deleteComment({
               owner: context.repo.owner,
               repo: context.repo.repo,
-              comment_id: steps['check-comments'].outputs.comment_id,
+              comment_id: process.env.COMMENT_ID,
             });

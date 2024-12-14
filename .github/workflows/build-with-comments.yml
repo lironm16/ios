@@ -31,9 +31,7 @@ jobs:
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
           script: |
-            const commentBody = `🚨 The build has failed! Please check the logs. 
-Target branch: \`${context.payload.pull_request.base.ref}\`
-You can view the workflow details [here](https://github.com/${context.repo.owner}/${context.repo.repo}/actions/runs/${context.runId}).
+            const commentBody = `🚨 The build has failed! Please check the logs. Target branch: \`${context.payload.pull_request.base.ref}\` You can view the workflow details [here](https://github.com/${context.repo.owner}/${context.repo.repo}/actions/runs/${context.runId}).
             `.trim();
 
             const existingComments = await github.rest.issues.listComments({

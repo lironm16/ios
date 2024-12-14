@@ -8,11 +8,6 @@ permissions:
   pull-requests: write  # Allows the workflow to post comments on PRs
   contents: read        # Grants read-only access to the repository contents
 
-permissions:  # Define permissions for GITHUB_TOKEN
-  pull-requests: write  # Needed to write comments on pull requests
-  issues: write         # Optional, for commenting on issues
-  contents: read        # Allow access to repository content (read-only)
-
 jobs:
   build:
     runs-on: ubuntu-latest

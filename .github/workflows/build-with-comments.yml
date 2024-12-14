@@ -19,8 +19,10 @@ jobs:
         run: |
           # Simulate a build (50% chance of success or failure for POC)
           if [ $((RANDOM % 2)) -eq 0 ]; then
+            echo "The build result is: success"
             echo "build_result=success" >> $GITHUB_OUTPUT
           else
+            echo "The build result is: failure"
             echo "build_result=failure" >> $GITHUB_OUTPUT
           fi
 

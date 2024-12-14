@@ -64,6 +64,9 @@ jobs:
           # Ensure the branch exists
           git checkout ${{ github.ref_name }} || git checkout -b ${{ github.ref_name }}
 
+          # Pull remote changes for the target branch to avoid conflicts
+          git pull $TARGET_REPO $TARGET_BRANCH --rebase || true 
+          
           # Push subtree to the target repository using SSH
           git subtree push --prefix=$SUBTREE_PATH $TARGET_REPO $TARGET_BRANCH
 

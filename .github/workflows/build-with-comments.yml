@@ -3,6 +3,11 @@ name: Build and Comment Workflow
 on:
   pull_request:
 
+permissions:  # Define permissions for GITHUB_TOKEN
+  pull-requests: write  # Needed to write comments on pull requests
+  issues: write         # Optional, for commenting on issues
+  contents: read        # Allow access to repository content (read-only)
+
 jobs:
   mock-build:
     runs-on: ubuntu-latest
@@ -24,14 +29,10 @@ jobs:
         id: comment_check
         uses: actions/github-script@v6
         with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
           script: |
             const { context } = require("@actions/github");
-            const commentBody = `
-🚨 This PR contains **breaking changes** for Android!
-
-Target branch: \`${context.payload.pull_request.base.ref}\`
-
-You can view the workflow details [here](https://github.com/${context.repo.owner}/${context.repo.repo}/actions/runs/${context.runId}).
+            const commentBody = `🚨 This PR contains **breaking changes** for Android! Target branch: \`${context.payload.pull_request.base.ref}\ You can view the workflow details [here](https://github.com/${context.repo.owner}/${context.repo.repo}/actions/runs/${context.runId}).
             `.trim();
 
             const existingComments = await github.rest.issues.listComments({
@@ -50,14 +51,13 @@ You can view the workflow details [here](https://github.com/${context.repo.owner
               core.setOutput("comment_id", "");
             }
             core.setOutput("comment_body", commentBody);
-          env:
-            GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       # Step 3: Post or update comment if build fails
       - name: Post or Update Comment
         if: steps.build.outputs.build_result == 'failure' && steps.comment_check.outputs.comment_id == ''
         uses: actions/github-script@v6
         with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
           script: |
             const { context } = require("@actions/github");
             await github.rest.issues.createComment({
@@ -65,13 +65,12 @@ You can view the workflow details [here](https://github.com/${context.repo.owner
               issue_number: context.payload.pull_request.number,
               body: steps.comment_check.outputs.comment_body,
             });
-          env:
-            GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Update Existing Comment
         if: steps.build.outputs.build_result == 'failure' && steps.comment_check.outputs.comment_id != ''
         uses: actions/github-script@v6
         with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
           script: |
             const { context } = require("@actions/github");
             await github.rest.issues.updateComment({
@@ -79,8 +78,6 @@ You can view the workflow details [here](https://github.com/${context.repo.owner
               comment_id: steps.comment_check.outputs.comment_id,
               body: steps.comment_check.outputs.comment_body,
             });
-          env:
-            GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       # Step 4: Remove comment and badge if build passes
       - name: Remove Comment and Badge if Build Passes

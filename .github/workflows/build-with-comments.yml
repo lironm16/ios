@@ -85,8 +85,7 @@ jobs:
             }
 
       # Step 4: Update the PR title with a badge
-      # Step 2: Add or Remove Warning Badge in PR Description
-      - name: Manage Warning Badge in PR Description
+- name: Manage Warning Badge in PR Description
         if: steps.build.outputs.build_result == 'failure' || steps.build.outputs.build_result == 'success'
         uses: actions/github-script@v6
         env:
@@ -104,7 +103,7 @@ jobs:
               pull_number: process.env.PR_NUMBER,
             });
 
-            let updatedBody = pullRequest.body || '';
+            let updatedBody = pullRequest.body || ''; // Handle null body as empty string
 
             // Remove any existing badge from the description
             updatedBody = updatedBody.replace(/!\[Build Status\]\([^)]+\)\s*/, '');
@@ -115,7 +114,7 @@ jobs:
             }
 
             // Update the PR description only if it has changed
-            if (updatedBody.trim() !== pullRequest.body.trim()) {
+            if (updatedBody.trim() !== (pullRequest.body || '').trim()) {
               await github.rest.pulls.update({
                 owner: context.repo.owner,
                 repo: context.repo.repo,
@@ -123,7 +122,7 @@ jobs:
                 body: updatedBody.trim(),
               });
             }
-
+            
       # Step 4: Remove Comment if Build Passes
       - name: Remove Comment if Build Passes
         if: steps.build.outputs.build_result == 'success' && steps.check-comments.outputs.comment_id != ''

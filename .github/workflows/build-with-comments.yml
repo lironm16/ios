@@ -83,6 +83,38 @@ jobs:
               });
             }
 
+      # Step 4: Update the PR title with a badge
+      - name: Add or Remove Badge in PR Title
+        if: steps.build.outputs.build_result == 'failure' || steps.build.outputs.build_result == 'success'
+        uses: actions/github-script@v6
+        env:
+          BUILD_RESULT: ${{ steps.build.outputs.build_result }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          script: |
+            const badge = '![Build Status](https://img.shields.io/badge/build-failure-red)';
+            const successBadge = '![Build Status](https://img.shields.io/badge/build-success-brightgreen)';
+
+            const { data: pullRequest } = await github.rest.pulls.get({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              pull_number: process.env.PR_NUMBER,
+            });
+
+            let updatedTitle = pullRequest.title.replace(/!\[Build Status\]\([^)]+\)\s*/, '');
+
+            if (process.env.BUILD_RESULT === 'failure') {
+              updatedTitle = `${badge} ${updatedTitle}`;
+            }
+
+            await github.rest.pulls.update({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              pull_number: process.env.PR_NUMBER,
+              title: updatedTitle,
+            });
+
       # Step 4: Remove Comment if Build Passes
       - name: Remove Comment if Build Passes
         if: steps.build.outputs.build_result == 'success' && steps.check-comments.outputs.comment_id != ''

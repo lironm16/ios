@@ -31,8 +31,9 @@ jobs:
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
           script: |
-            const { context } = require("@actions/github");
-            const commentBody = `🚨 The build has failed! Please check the logs. Target branch: \`${context.payload.pull_request.base.ref}\` You can view the workflow details [here](https://github.com/${context.repo.owner}/${context.repo.repo}/actions/runs/${context.runId}).
+            const commentBody = `🚨 The build has failed! Please check the logs. 
+Target branch: \`${context.payload.pull_request.base.ref}\`
+You can view the workflow details [here](https://github.com/${context.repo.owner}/${context.repo.repo}/actions/runs/${context.runId}).
             `.trim();
 
             const existingComments = await github.rest.issues.listComments({
@@ -59,12 +60,11 @@ jobs:
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
           script: |
-            const { context } = require("@actions/github");
             await github.rest.issues.createComment({
               owner: context.repo.owner,
               repo: context.repo.repo,
               issue_number: context.payload.pull_request.number,
-              body: steps.check-comments.outputs.comment_body,
+              body: steps['check-comments'].outputs.comment_body,
             });
 
       - name: Update Existing Comment
@@ -73,12 +73,11 @@ jobs:
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
           script: |
-            const { context } = require("@actions/github");
             await github.rest.issues.updateComment({
               owner: context.repo.owner,
               repo: context.repo.repo,
-              comment_id: steps.check-comments.outputs.comment_id,
-              body: steps.check-comments.outputs.comment_body,
+              comment_id: steps['check-comments'].outputs.comment_id,
+              body: steps['check-comments'].outputs.comment_body,
             });
 
       # Step 4: Remove comment if the build passes
@@ -88,9 +87,8 @@ jobs:
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
           script: |
-            const { context } = require("@actions/github");
             await github.rest.issues.deleteComment({
               owner: context.repo.owner,
               repo: context.repo.repo,
-              comment_id: steps.check-comments.outputs.comment_id,
+              comment_id: steps['check-comments'].outputs.comment_id,
             });

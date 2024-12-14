@@ -14,6 +14,12 @@ jobs:
       - name: Checkout Repository
         uses: actions/checkout@v4
 
+      # Debug SSH Key
+      - name: Debug SSH Key
+        run: |
+          eval "$(ssh-agent -s)"
+          ssh-add -l
+
       # Step 2: Setup SSH
       - name: Setup SSH
         run: |

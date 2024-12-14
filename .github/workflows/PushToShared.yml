@@ -24,6 +24,11 @@ jobs:
           ssh-add -l # Verify the key is added
 
 
+      # Debug SSH Connection
+      - name: Test SSH Connection
+        run: |
+          ssh -T git@github.com
+
       # Debug SSH Key
       - name: Debug SSH Setup
         run: |

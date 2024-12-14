@@ -25,10 +25,14 @@ jobs:
 
 
       # Debug SSH Key
-      - name: Debug SSH Key
+      - name: Debug SSH Setup
         run: |
+          echo "Checking SSH Agent:"
           eval "$(ssh-agent -s)"
           ssh-add -l
+          echo "Testing SSH Connection to GitHub:"
+          ssh -T git@github.com || true
+
           
       # Step 3: Configure Git
       - name: Configure Git

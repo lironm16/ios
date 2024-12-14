@@ -1,7 +1,7 @@
 name: SharedLevelPlay PR Check
 
 on:
-  pull_request:
+  workflow_dispatch:
 
 jobs:
   check-subtree:

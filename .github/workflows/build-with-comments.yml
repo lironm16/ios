@@ -85,7 +85,8 @@ jobs:
             }
 
       # Step 4: Update the PR title with a badge
-      - name: Add or Remove Badge in PR Title
+      # Step 2: Add or Remove Warning Badge in PR Description
+      - name: Manage Warning Badge in PR Description
         if: steps.build.outputs.build_result == 'failure' || steps.build.outputs.build_result == 'success'
         uses: actions/github-script@v6
         env:
@@ -94,27 +95,34 @@ jobs:
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
           script: |
-            const badge = '![Build Status](https://img.shields.io/badge/build-failure-red)';
-            const successBadge = '![Build Status](https://img.shields.io/badge/build-success-brightgreen)';
+            const warningBadge = '![Build Status](https://img.shields.io/badge/Build-Warning-yellow)';
 
+            // Fetch the current PR details
             const { data: pullRequest } = await github.rest.pulls.get({
               owner: context.repo.owner,
               repo: context.repo.repo,
               pull_number: process.env.PR_NUMBER,
             });
 
-            let updatedTitle = pullRequest.title.replace(/!\[Build Status\]\([^)]+\)\s*/, '');
+            let updatedBody = pullRequest.body || '';
+
+            // Remove any existing badge from the description
+            updatedBody = updatedBody.replace(/!\[Build Status\]\([^)]+\)\s*/, '');
 
             if (process.env.BUILD_RESULT === 'failure') {
-              updatedTitle = `${badge} ${updatedTitle}`;
+              // Prepend warning badge to the description
+              updatedBody = `${warningBadge}\n\n${updatedBody}`;
             }
 
-            await github.rest.pulls.update({
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              pull_number: process.env.PR_NUMBER,
-              title: updatedTitle,
-            });
+            // Update the PR description only if it has changed
+            if (updatedBody.trim() !== pullRequest.body.trim()) {
+              await github.rest.pulls.update({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                pull_number: process.env.PR_NUMBER,
+                body: updatedBody.trim(),
+              });
+            }
 
       # Step 4: Remove Comment if Build Passes
       - name: Remove Comment if Build Passes

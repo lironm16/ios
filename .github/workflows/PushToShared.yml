@@ -14,12 +14,6 @@ jobs:
       - name: Checkout Repository
         uses: actions/checkout@v4
 
-      # Debug SSH Key
-      - name: Debug SSH Key
-        run: |
-          eval "$(ssh-agent -s)"
-          ssh-add -l
-
       # Step 2: Setup SSH
       - name: Setup SSH
         run: |
@@ -28,7 +22,12 @@ jobs:
           eval "$(ssh-agent -s)"
           ssh-add - <<< "${{ secrets.SHARED_SDK_DEPLOY_KEY }}"
 
-
+      # Debug SSH Key
+      - name: Debug SSH Key
+        run: |
+          eval "$(ssh-agent -s)"
+          ssh-add -l
+          
       # Step 3: Configure Git
       - name: Configure Git
         run: |

@@ -1,0 +1,43 @@
+name: Rerun PR Checks
+
+on:
+  repository_dispatch:
+    types:
+      - rerun-ios-pr-check
+
+jobs:
+  rerun-workflow:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Fetch Open PRs Targeting the Branch
+        id: fetch-prs
+        run: |
+          # Extract branch name from the payload
+          TARGET_BRANCH="${{ github.event.client_payload.branch }}"
+          
+          # Fetch PRs targeting this branch
+          PRS=$(gh pr list --json number,baseRef --jq ".[] | select(.baseRef == \"${TARGET_BRANCH}\") | .number")
+          
+          # Log the PRs for debugging
+          echo "PRs targeting branch '${TARGET_BRANCH}': $PRS"
+          
+          # Save PR numbers to environment variable
+          echo "pr_numbers=$PRS" >> $GITHUB_ENV
+
+      - name: Rerun Workflow Check on PRs
+        if: env.pr_numbers
+        run: |
+          # Loop through all PRs and rerun a specific check
+          for pr in $PR_NUMBERS; do
+            echo "Rerunning workflow for PR #$pr"
+            
+            # Replace <workflow-id> with the specific workflow's ID
+            curl -X POST \
+              -H "Accept: application/vnd.github+json" \
+              -H "Authorization: Bearer ${{ secrets.GITHUB_TOKEN }}" \
+              https://api.github.com/repos/lironm16/ios/actions/runs/<workflow-id>/rerun
+          done

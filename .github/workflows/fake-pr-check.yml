@@ -21,3 +21,10 @@ jobs:
             ".[] | select(.path == \".github/workflows/$WORKFLOW_FILE\") | .id")
           echo "Workflow ID: $WORKFLOW_ID"
           echo "workflow_id=$WORKFLOW_ID" >> $GITHUB_ENV
+      
+      - name: Simulate Processing with Delay
+        run: |
+          echo "Starting simulated delay..."
+          sleep 30  # Delay for 30 seconds
+          echo "Delay complete. Proceeding with workflow."
+

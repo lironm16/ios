@@ -17,14 +17,10 @@ jobs:
       - name: Checkout Repository
         uses: actions/checkout@v4
 
-      - name: Configure Authentication for GitHub CLI
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: |
-          echo "GitHub CLI is authenticated."
-
       - name: Fetch Open PRs Targeting the Branch
         id: fetch-prs
+        env:
+          GH_TOKEN: ${{ github.token }}
         run: |
           # Use the branch from the client payload
           TARGET_BRANCH="main"

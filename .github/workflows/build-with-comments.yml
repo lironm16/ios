@@ -45,6 +45,10 @@ jobs:
               console.log('No existing comment found.');
             }
 
+            // Construct the new comment body
+            const commentBody = `${commentTag}\n🚨 The build has failed! Please check the logs.\n\nTarget branch: \`${context.payload.pull_request.base.ref}\`\nView the details [here](https://github.com/${context.repo.owner}/${context.repo.repo}/actions/runs/${context.runId})`;
+            core.setOutput('comment_body', commentBody);
+
       # Step 3: Post or update comment if the build fails
       - name: Post or Update Failure Comment
         if: steps.build.outputs.build_result == 'failure'
@@ -56,14 +60,13 @@ jobs:
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
           script: |
-            const commentTag = '<!-- build-status-comment -->'; // Tag to identify the comment
             if (process.env.COMMENT_ID) {
               // Update existing comment
               await github.rest.issues.updateComment({
                 owner: context.repo.owner,
                 repo: context.repo.repo,
                 comment_id: process.env.COMMENT_ID,
-                body: `${commentTag}\n${process.env.COMMENT_BODY}`,
+                body: process.env.COMMENT_BODY,
               });
               console.log(`Updated comment with ID: ${process.env.COMMENT_ID}`);
             } else {
@@ -72,7 +75,7 @@ jobs:
                 owner: context.repo.owner,
                 repo: context.repo.repo,
                 issue_number: process.env.PR_NUMBER,
-                body: `${commentTag}\n${process.env.COMMENT_BODY}`,
+                body: process.env.COMMENT_BODY,
               });
               console.log(`Created new comment with ID: ${result.data.id}`);
             }

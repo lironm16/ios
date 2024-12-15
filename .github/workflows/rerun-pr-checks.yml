@@ -1,7 +1,7 @@
 name: Re-run Specific Workflow for PRs
 
 on:
-  push:
+  pull_request::
   repository_dispatch:
     types:
       - rerun-pr-check

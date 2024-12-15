@@ -14,10 +14,17 @@ jobs:
       # - name: Install GitHub CLI
       #   run: sudo apt-get install gh -y
 
-      - name: Fetch Open PRs Targeting the Branch
-        id: fetch-prs
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Configure Authentication for GitHub CLI
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          echo "GitHub CLI is authenticated."
+
+      - name: Fetch Open PRs Targeting the Branch
+        id: fetch-prs
         run: |
           # Use the branch from the client payload
           TARGET_BRANCH="main"

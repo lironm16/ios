@@ -1,0 +1,16 @@
+name: Fake PR Check
+
+on:
+  pull_request:
+    branches:
+      - "**"
+
+jobs:
+  fake-check:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Always Fail the Check
+        run: |
+          echo "This is a fake check that always fails."
+          exit 1 # Forces the step to fail

@@ -12,7 +12,7 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      # Step 1: Mock a build result (replace with your actual build steps)
+      # Step 1: Mock a build result
       - name: Mock Build Result
         id: build
         run: |
@@ -45,24 +45,7 @@ jobs:
               console.log('No existing comment found.');
             }
 
-      # Step 3: Delete Existing Comment (if any)
-      - name: Delete Existing Comment
-        if: steps.check-comments.outputs.comment_id != ''
-        uses: actions/github-script@v6
-        env:
-          COMMENT_ID: ${{ steps.check-comments.outputs.comment_id }}
-        with:
-          github-token: ${{ secrets.GITHUB_TOKEN }}
-          script: |
-            console.log(`Attempting to delete comment with ID: ${process.env.COMMENT_ID}`);
-            await github.rest.issues.deleteComment({
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              comment_id: process.env.COMMENT_ID,
-            });
-            console.log(`Deleted comment with ID: ${process.env.COMMENT_ID}`);
-
-      # Step 4: Post New Comment if Build Fails
+      # Step 3: Add New Comment if Build Fails
       - name: Add New Comment
         if: steps.build.outputs.build_result == 'failure'
         uses: actions/github-script@v6
@@ -79,6 +62,23 @@ jobs:
               body: commentBody,
             });
             console.log(`Created new comment with ID: ${result.data.id}`);
+
+      # Step 4: Delete Existing Comment (if any)
+      - name: Delete Existing Comment
+        if: steps.check-comments.outputs.comment_id != ''
+        uses: actions/github-script@v6
+        env:
+          COMMENT_ID: ${{ steps.check-comments.outputs.comment_id }}
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          script: |
+            console.log(`Attempting to delete comment with ID: ${process.env.COMMENT_ID}`);
+            await github.rest.issues.deleteComment({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              comment_id: process.env.COMMENT_ID,
+            });
+            console.log(`Deleted comment with ID: ${process.env.COMMENT_ID}`);
 
       # Step 5: Remove Comment if Build Passes
       - name: Remove Comment if Build Passes

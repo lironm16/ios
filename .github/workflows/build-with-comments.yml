@@ -79,20 +79,3 @@ jobs:
               comment_id: process.env.COMMENT_ID,
             });
             console.log(`Deleted comment with ID: ${process.env.COMMENT_ID}`);
-
-      # Step 5: Remove Comment if Build Passes
-      - name: Remove Comment if Build Passes
-        if: steps.build.outputs.build_result == 'success' && steps.check-comments.outputs.comment_id != ''
-        uses: actions/github-script@v6
-        env:
-          COMMENT_ID: ${{ steps.check-comments.outputs.comment_id }}
-        with:
-          github-token: ${{ secrets.GITHUB_TOKEN }}
-          script: |
-            console.log(`Attempting to remove comment with ID: ${process.env.COMMENT_ID}`);
-            await github.rest.issues.deleteComment({
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              comment_id: process.env.COMMENT_ID,
-            });
-            console.log(`Removed comment with ID: ${process.env.COMMENT_ID}`);

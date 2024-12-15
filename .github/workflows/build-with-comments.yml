@@ -18,7 +18,7 @@ jobs:
         run: |
           echo "build_result=failure" >> $GITHUB_OUTPUT
 
-      # Step 2: Check for existing comments on the PR
+      # Step 2: Check for Existing Comments on the PR
       - name: Check for Existing Comments
         id: check-comments
         uses: actions/github-script@v6
@@ -45,42 +45,42 @@ jobs:
               console.log('No existing comment found.');
             }
 
-            // Construct the new comment body
-            const commentBody = `${commentTag}\n🚨 The build has failed! Please check the logs.\n\nTarget branch: \`${context.payload.pull_request.base.ref}\`\nView the details [here](https://github.com/${context.repo.owner}/${context.repo.repo}/actions/runs/${context.runId})`;
-            core.setOutput('comment_body', commentBody);
-
-      # Step 3: Post or update comment if the build fails
-      - name: Post or Update Failure Comment
-        if: steps.build.outputs.build_result == 'failure'
+      # Step 3: Delete Existing Comment (if any)
+      - name: Delete Existing Comment
+        if: steps.check-comments.outputs.comment_id != ''
         uses: actions/github-script@v6
         env:
-          COMMENT_BODY: ${{ steps.check-comments.outputs.comment_body }}
           COMMENT_ID: ${{ steps.check-comments.outputs.comment_id }}
-          PR_NUMBER: ${{ github.event.pull_request.number }}
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
           script: |
-            if (process.env.COMMENT_ID) {
-              // Update existing comment
-              await github.rest.issues.updateComment({
-                owner: context.repo.owner,
-                repo: context.repo.repo,
-                comment_id: process.env.COMMENT_ID,
-                body: process.env.COMMENT_BODY,
-              });
-              console.log(`Updated comment with ID: ${process.env.COMMENT_ID}`);
-            } else {
-              // Create new comment
-              const result = await github.rest.issues.createComment({
-                owner: context.repo.owner,
-                repo: context.repo.repo,
-                issue_number: process.env.PR_NUMBER,
-                body: process.env.COMMENT_BODY,
-              });
-              console.log(`Created new comment with ID: ${result.data.id}`);
-            }
+            console.log(`Attempting to delete comment with ID: ${process.env.COMMENT_ID}`);
+            await github.rest.issues.deleteComment({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              comment_id: process.env.COMMENT_ID,
+            });
+            console.log(`Deleted comment with ID: ${process.env.COMMENT_ID}`);
 
-      # Step 4: Remove Comment if Build Passes
+      # Step 4: Post New Comment if Build Fails
+      - name: Add New Comment
+        if: steps.build.outputs.build_result == 'failure'
+        uses: actions/github-script@v6
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          script: |
+            const commentTag = '<!-- build-status-comment -->'; // Tag to identify the comment
+            const commentBody = `${commentTag}\n🚨 Build failed! Please check the logs.\n\nTarget branch: \`${context.payload.pull_request.base.ref}\`\nView the details [here](https://github.com/${context.repo.owner}/${context.repo.repo}/actions/runs/${context.runId})`;
+
+            const result = await github.rest.issues.createComment({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.payload.pull_request.number,
+              body: commentBody,
+            });
+            console.log(`Created new comment with ID: ${result.data.id}`);
+
+      # Step 5: Remove Comment if Build Passes
       - name: Remove Comment if Build Passes
         if: steps.build.outputs.build_result == 'success' && steps.check-comments.outputs.comment_id != ''
         uses: actions/github-script@v6
@@ -89,12 +89,10 @@ jobs:
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
           script: |
-            if (process.env.COMMENT_ID) {
-              console.log(`Attempting to delete comment with ID: ${process.env.COMMENT_ID}`);
-              await github.rest.issues.deleteComment({
-                owner: context.repo.owner,
-                repo: context.repo.repo,
-                comment_id: process.env.COMMENT_ID,
-              });
-              console.log(`Deleted comment with ID: ${process.env.COMMENT_ID}`);
-            }
+            console.log(`Attempting to remove comment with ID: ${process.env.COMMENT_ID}`);
+            await github.rest.issues.deleteComment({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              comment_id: process.env.COMMENT_ID,
+            });
+            console.log(`Removed comment with ID: ${process.env.COMMENT_ID}`);

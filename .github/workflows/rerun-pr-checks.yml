@@ -6,6 +6,10 @@ on:
     types:
       - rerun-pr-check
 
+permissions:
+  contents: read
+  actions: write
+  
 jobs:
   rerun-checks:
     runs-on: ubuntu-latest

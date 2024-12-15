@@ -18,8 +18,7 @@ jobs:
         id: fetch-prs
         run: |
           # Use the branch from the client payload
-          TARGET_BRANCH= "main" 
-          #"${{ github.event.client_payload.branch }}"
+          TARGET_BRANCH="main"
           echo "Target Branch: $TARGET_BRANCH"
 
           # Fetch all open PRs targeting the specified branch

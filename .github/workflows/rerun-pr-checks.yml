@@ -11,9 +11,6 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      # - name: Install GitHub CLI
-      #   run: sudo apt-get install gh -y
-
       - name: Checkout Repository
         uses: actions/checkout@v4
 

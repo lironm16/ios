@@ -1,4 +1,4 @@
-name: Rerun PR Checks
+name: Re-run Specific Workflow for PRs
 
 on:
   repository_dispatch:
@@ -6,38 +6,53 @@ on:
       - rerun-pr-check
 
 jobs:
-  rerun-workflow:
+  rerun-checks:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout Code
-        uses: actions/checkout@v4
+      # - name: Install GitHub CLI
+      #   run: sudo apt-get install gh -y
 
       - name: Fetch Open PRs Targeting the Branch
         id: fetch-prs
         run: |
-          # Extract branch name from the payload
+          # Use the branch from the client payload
           TARGET_BRANCH="${{ github.event.client_payload.branch }}"
-          
-          # Fetch PRs targeting this branch
-          PRS=$(gh pr list --json number,baseRef --jq ".[] | select(.baseRef == \"${TARGET_BRANCH}\") | .number")
-          
-          # Log the PRs for debugging
-          echo "PRs targeting branch '${TARGET_BRANCH}': $PRS"
-          
-          # Save PR numbers to environment variable
-          echo "pr_numbers=$PRS" >> $GITHUB_ENV
+          echo "Target Branch: $TARGET_BRANCH"
 
-      - name: Rerun Workflow Check on PRs
-        if: env.pr_numbers
+          # Fetch all open PRs targeting the specified branch
+          PRS=$(gh pr list --state open --json number,baseRefName,headRefName,headSha --jq \
+            ".[] | select(.baseRefName == \"$TARGET_BRANCH\") | {number: .number, branch: .headRefName, sha: .headSha}")
+          echo "PR Data: $PRS"
+          echo "pr_data=$PRS" >> $GITHUB_ENV
+
+      - name: Re-run Latest Workflow for PRs
         run: |
-          # Loop through all PRs and rerun a specific check
-          for pr in $PR_NUMBERS; do
-            echo "Rerunning workflow for PR #$pr"
-            
-            # Replace <workflow-id> with the specific workflow's ID
+          PRS_JSON=${{ env.pr_data }}
+          WORKFLOW_FILE="fake-pr-check.yml"
+
+          # Process each PR targeting the branch
+          echo $PRS_JSON | jq -c '.[]' | while read pr; do
+            PR_NUMBER=$(echo $pr | jq -r '.number')
+            PR_BRANCH=$(echo $pr | jq -r '.branch')
+            PR_SHA=$(echo $pr | jq -r '.sha')
+
+            echo "Processing PR #$PR_NUMBER on branch $PR_BRANCH with SHA $PR_SHA..."
+
+            # Fetch the latest run for the specific workflow filename
+            RUN_ID=$(gh run list --json databaseId,workflowName,headBranch,headSha,createdAt,workflowPath --jq \
+              ".[] | select(.workflowPath == \".github/workflows/$WORKFLOW_FILE\" and .headBranch == \"$PR_BRANCH\" and .headSha == \"$PR_SHA\") | sort_by(.createdAt) | last | .databaseId")
+
+            # Ensure a matching run exists
+            if [ -z "$RUN_ID" ]; then
+              echo "No workflow runs found for PR #$PR_NUMBER with workflow file $WORKFLOW_FILE."
+              continue
+            fi
+
+            # Re-run the latest workflow
+            echo "Re-running workflow run with ID: $RUN_ID for PR #$PR_NUMBER..."
             curl -X POST \
               -H "Accept: application/vnd.github+json" \
               -H "Authorization: Bearer ${{ secrets.GITHUB_TOKEN }}" \
-              https://api.github.com/repos/lironm16/ios/actions/runs/<workflow-id>/rerun
+              https://api.github.com/repos/${{ github.repository }}/actions/runs/$RUN_ID/rerun
           done

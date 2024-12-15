@@ -34,31 +34,33 @@ jobs:
 
       - name: Re-run Latest Workflow for PRs
         run: |
-          PRS_JSON=${{ env.pr_data }}
+          # Wrap JSON in an array if it's a single object
+          PRS_JSON='[{"branch":"feature/shared","number":7,"sha":"31e312fc8a89e8f1a3de16b7f2c1f6e18f01e636"}]'
           WORKFLOW_FILE="fake-pr-check.yml"
-
+          
           # Process each PR targeting the branch
           echo $PRS_JSON | jq -c '.[]' | while read pr; do
             PR_NUMBER=$(echo $pr | jq -r '.number')
             PR_BRANCH=$(echo $pr | jq -r '.branch')
             PR_SHA=$(echo $pr | jq -r '.sha')
-
+          
             echo "Processing PR #$PR_NUMBER on branch $PR_BRANCH with SHA $PR_SHA..."
-
+          
             # Fetch the latest run for the specific workflow filename
             RUN_ID=$(gh run list --json databaseId,workflowName,headBranch,headSha,createdAt,workflowPath --jq \
               ".[] | select(.workflowPath == \".github/workflows/$WORKFLOW_FILE\" and .headBranch == \"$PR_BRANCH\" and .headSha == \"$PR_SHA\") | sort_by(.createdAt) | last | .databaseId")
-
+          
             # Ensure a matching run exists
             if [ -z "$RUN_ID" ]; then
               echo "No workflow runs found for PR #$PR_NUMBER with workflow file $WORKFLOW_FILE."
               continue
             fi
-
+          
             # Re-run the latest workflow
             echo "Re-running workflow run with ID: $RUN_ID for PR #$PR_NUMBER..."
             curl -X POST \
               -H "Accept: application/vnd.github+json" \
               -H "Authorization: Bearer ${{ secrets.GITHUB_TOKEN }}" \
-              https://api.github.com/repos/${{ github.repository }}/actions/runs/$RUN_ID/rerun
+              https://api.github.com/repos/lironm16/ios/actions/runs/$RUN_ID/rerun
           done
+

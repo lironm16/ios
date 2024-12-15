@@ -3,7 +3,7 @@ name: Rerun PR Checks
 on:
   repository_dispatch:
     types:
-      - rerun-ios-pr-check
+      - rerun-pr-check
 
 jobs:
   rerun-workflow:

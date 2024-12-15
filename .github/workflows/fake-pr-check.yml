@@ -2,15 +2,22 @@ name: Fake PR Check
 
 on:
   pull_request:
-    branches:
-      - "**"
 
 jobs:
-  fake-check:
+  discover-workflow-id:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Always Fail the Check
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Get Workflow ID
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          echo "This is a fake check that always fails."
-          exit 1 # Forces the step to fail
+          # Find the Workflow ID for this file
+          WORKFLOW_FILE="fake-pr-check.yml"
+          WORKFLOW_ID=$(gh workflow list --json id,name,path --jq \
+            ".[] | select(.path == \".github/workflows/$WORKFLOW_FILE\") | .id")
+          echo "Workflow ID: $WORKFLOW_ID"
+          echo "workflow_id=$WORKFLOW_ID" >> $GITHUB_ENV

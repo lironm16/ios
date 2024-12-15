@@ -16,7 +16,7 @@ jobs:
       - name: Mock Build Result
         id: build
         run: |
-          echo "build_result=failure" >> $GITHUB_OUTPUT
+          echo "build_result=success" >> $GITHUB_OUTPUT
 
       # Step 2: Check for Existing Comments on the PR
       - name: Check for Existing Comments

@@ -39,8 +39,10 @@ jobs:
 
             if (duplicateComment) {
               core.setOutput('comment_id', duplicateComment.id);
+              console.log(`Found comment with ID: ${duplicateComment.id}`);
             } else {
               core.setOutput('comment_id', '');
+              console.log('No existing comment found.');
             }
 
       # Step 3: Delete Existing Comment (if any)
@@ -50,12 +52,14 @@ jobs:
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
           script: |
-            console.log(`Deleting comment with ID: ${{ steps.check-comments.outputs.comment_id }}`);
+            const commentId = ${{ steps.check-comments.outputs.comment_id }};
+            console.log(`Attempting to delete comment with ID: ${commentId}`);
             await github.rest.issues.deleteComment({
               owner: context.repo.owner,
               repo: context.repo.repo,
-              comment_id: ${{ steps.check-comments.outputs.comment_id }},
+              comment_id: commentId,
             });
+            console.log(`Deleted comment with ID: ${commentId}`);
 
       # Step 4: Post New Comment (if build fails)
       - name: Add New Comment
@@ -67,12 +71,14 @@ jobs:
             const commentTag = '<!-- build-status-comment -->'; // Tag to identify the comment
             const commentBody = `${commentTag}\n🚨 Build failed! Please check the logs.\n\nTarget branch: \`${context.payload.pull_request.base.ref}\`\nView the details [here](https://github.com/${context.repo.owner}/${context.repo.repo}/actions/runs/${context.runId})`;
 
-            await github.rest.issues.createComment({
+            const result = await github.rest.issues.createComment({
               owner: context.repo.owner,
               repo: context.repo.repo,
               issue_number: context.payload.pull_request.number,
               body: commentBody,
             });
+
+            console.log(`Created new comment with ID: ${result.data.id}`);
 
       # Step 5: Remove Comment if Build Passes
       - name: Remove Comment if Build Passes
@@ -81,9 +87,11 @@ jobs:
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
           script: |
-            console.log(`Removing comment with ID: ${{ steps.check-comments.outputs.comment_id }}`);
+            const commentId = ${{ steps.check-comments.outputs.comment_id }};
+            console.log(`Attempting to remove comment with ID: ${commentId}`);
             await github.rest.issues.deleteComment({
               owner: context.repo.owner,
               repo: context.repo.repo,
-              comment_id: ${{ steps.check-comments.outputs.comment_id }},
+              comment_id: commentId,
             });
+            console.log(`Removed comment with ID: ${commentId}`);

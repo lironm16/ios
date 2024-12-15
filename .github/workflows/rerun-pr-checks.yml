@@ -16,6 +16,8 @@ jobs:
 
       - name: Fetch Open PRs Targeting the Branch
         id: fetch-prs
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           # Use the branch from the client payload
           TARGET_BRANCH="main"

@@ -46,8 +46,8 @@ jobs:
             echo "Processing PR #$PR_NUMBER on branch $PR_BRANCH with SHA $PR_SHA..."
           
             # Fetch the latest run for the workflow ID
-            RUN_ID=$(gh run list --json databaseId,workflowName,headBranch,headSha,createdAt,workflowId --jq \
-              ".[] | select(.workflowId == $WORKFLOW_ID and .headBranch == \"$PR_BRANCH\" and .headSha == \"$PR_SHA\") | sort_by(.createdAt) | last | .databaseId")
+            RUN_ID=$(gh run list --json databaseId,workflowName,headBranch,headSha,createdAt,workflowDatabaseId --jq \
+              ".[] | select(.workflowDatabaseId == $WORKFLOW_ID and .headBranch == \"$PR_BRANCH\" and .headSha == \"$PR_SHA\") | sort_by(.createdAt) | last | .databaseId")
           
             # Ensure a matching run exists
             if [ -z "$RUN_ID" ]; then

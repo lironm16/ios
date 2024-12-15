@@ -24,8 +24,8 @@ jobs:
           echo "Target Branch: $TARGET_BRANCH"
 
           # Fetch all open PRs targeting the specified branch
-          PRS=$(gh pr list --state open --json number,baseRefName,headRefName,headSha --jq \
-            ".[] | select(.baseRefName == \"$TARGET_BRANCH\") | {number: .number, branch: .headRefName, sha: .headSha}")
+          PRS=$(gh pr list --state open --json number,baseRefName,headRefName,headRefOid --jq \
+            ".[] | select(.baseRefName == \"$TARGET_BRANCH\") | {number: .number, branch: .headRefName, sha: .headRefOid}")
           echo "PR Data: $PRS"
           echo "pr_data=$PRS" >> $GITHUB_ENV
 

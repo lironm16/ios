@@ -16,14 +16,6 @@ jobs:
       - name: Mock Build Result
         id: build
         run: |
-          # Simulate a build (50% chance of success or failure for POC)
-          # if [ $((RANDOM % 2)) -eq 0 ]; then
-          #   echo "The build result is: success"
-          #   echo "build_result=success" >> $GITHUB_OUTPUT
-          # else
-          #   echo "The build result is: failure"
-          #   echo "build_result=failure" >> $GITHUB_OUTPUT
-          # fi
           echo "build_result=failure" >> $GITHUB_OUTPUT
 
       # Step 2: Check for existing comments on the PR
@@ -33,38 +25,36 @@ jobs:
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
           script: |
-            const commentBody = `🚨 The build has failed! Please check the logs. Target branch: \`${context.payload.pull_request.base.ref}\` You can view the workflow details [here](https://github.com/${context.repo.owner}/${context.repo.repo}/actions/runs/${context.runId}).
-            `.trim();
-
+            const commentTag = '<!-- build-status-comment -->'; // Tag to identify the comment
             const existingComments = await github.rest.issues.listComments({
               owner: context.repo.owner,
               repo: context.repo.repo,
               issue_number: context.payload.pull_request.number,
             });
 
-            // Check for an existing comment with the same content
+            // Find the comment with the unique tag
             const duplicateComment = existingComments.data.find(comment =>
-              comment.body.startsWith("🚨 The build has failed!")
+              comment.body.includes(commentTag)
             );
 
             if (duplicateComment) {
-              core.setOutput("comment_id", duplicateComment.id);
+              core.setOutput('comment_id', duplicateComment.id);
             } else {
-              core.setOutput("comment_id", "");
+              core.setOutput('comment_id', '');
             }
-            core.setOutput("comment_body", commentBody);
 
       # Step 3: Delete Existing Comment (if any)
       - name: Delete Existing Comment
-        if: steps.check-comment.outputs.comment_id != ''
+        if: steps.check-comments.outputs.comment_id != ''
         uses: actions/github-script@v6
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
           script: |
+            console.log(`Deleting comment with ID: ${{ steps.check-comments.outputs.comment_id }}`);
             await github.rest.issues.deleteComment({
               owner: context.repo.owner,
               repo: context.repo.repo,
-              comment_id: ${{ steps.check-comment.outputs.comment_id }},
+              comment_id: ${{ steps.check-comments.outputs.comment_id }},
             });
 
       # Step 4: Post New Comment (if build fails)
@@ -83,18 +73,17 @@ jobs:
               issue_number: context.payload.pull_request.number,
               body: commentBody,
             });
-            
-      # Step 4: Remove Comment if Build Passes
+
+      # Step 5: Remove Comment if Build Passes
       - name: Remove Comment if Build Passes
         if: steps.build.outputs.build_result == 'success' && steps.check-comments.outputs.comment_id != ''
         uses: actions/github-script@v6
-        env:
-          COMMENT_ID: ${{ steps.check-comments.outputs.comment_id }}
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
           script: |
+            console.log(`Removing comment with ID: ${{ steps.check-comments.outputs.comment_id }}`);
             await github.rest.issues.deleteComment({
               owner: context.repo.owner,
               repo: context.repo.repo,
-              comment_id: process.env.COMMENT_ID,
+              comment_id: ${{ steps.check-comments.outputs.comment_id }},
             });
